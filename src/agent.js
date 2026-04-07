@@ -74,7 +74,7 @@ export async function askMildred(userMessage, history = []) {
   const reply = await agenticLoop(messages);
 
   // Extract and store memories in the background — don't await, keeps response fast
-  extractAndStore(userMessage, reply).catch(() => {});
+  if (process.env.MEMORY_ENABLED !== 'false') extractAndStore(userMessage, reply).catch(() => {});
 
   return reply;
 }
@@ -134,6 +134,6 @@ export async function askMildredStream(userMessage, history = [], onChunk, onToo
     fullReply = result.content;
   }
 
-  extractAndStore(userMessage, fullReply).catch(() => {});
+  if (process.env.MEMORY_ENABLED !== 'false') extractAndStore(userMessage, fullReply).catch(() => {});
   return fullReply;
 }

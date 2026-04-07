@@ -2,10 +2,11 @@
   "name": "my-service",
   "description": "What this API does and when to use it — the model reads this to decide when to call it",
   "baseUrl": "https://api.example.com",
+  "cacheTtlSeconds": 300,
   "auth": null
 }
 
-// With auth:
+// With auth (token stored in .env, not the config file):
 // {
 //   "name": "my-service",
 //   "description": "...",
@@ -18,3 +19,29 @@
 //
 // Add the actual token to .env:
 // MY_SERVICE_API_KEY=your-token-here
+
+// With API training (fetches endpoint, writes markdown to docs/, ingests):
+// {
+//   "name": "my-service",
+//   "description": "...",
+//   "baseUrl": "https://api.example.com",
+//   "train": {
+//     "endpoint": "/articles",
+//     "excludeFields": ["created_at", "image_url"]
+//   },
+//   "auth": null
+// }
+
+// With web scraping (crawls a site and ingests pages as markdown):
+// {
+//   "name": "my-site",
+//   "scrape": {
+//     "url": "https://example.com",
+//     "depth": 2,
+//     "maxPages": 50,
+//     "delayMs": 1000
+//   }
+// }
+//
+// Note: scraping may not work on sites protected by Cloudflare or similar
+// bot protection that requires JavaScript execution.

@@ -88,6 +88,32 @@ npm run train
 
 Lloom fetches the endpoint, auto-detects fields, writes individual markdown files to `./docs/my-service/`, and ingests them — all in one step.
 
+### Training from a website
+
+To scrape a site and ingest its pages as knowledge, add a `scrape` block instead of `train`:
+
+```json
+{
+  "name": "my-site",
+  "scrape": {
+    "url": "https://example.com",
+    "depth": 2,
+    "maxPages": 50,
+    "delayMs": 1000
+  }
+}
+```
+
+- `depth` — how many levels of links to follow from the root URL (default: 2)
+- `maxPages` — maximum number of pages to ingest (default: unlimited)
+- `delayMs` — delay in milliseconds between requests (default: 0)
+
+Scripts, styles, nav, header, and footer elements are stripped automatically. Image and binary file URLs are skipped.
+
+> **Note:** Sites protected by Cloudflare's JS challenge or similar bot protection will return empty content. For those, use the API training approach or manually add markdown files to `./docs/`.
+
+The **train button** in the chat UI triggers training for all configured services without needing shell access — useful when running in a container.
+
 ## Persistent memory
 
 Lloom automatically extracts memorable facts from every conversation and stores them as embeddings. On future queries, relevant memories are retrieved alongside knowledge base chunks — the model remembers context across sessions without any manual input.
@@ -95,16 +121,6 @@ Lloom automatically extracts memorable facts from every conversation and stores 
 ## API services (tools)
 
 Add JSON files to `config/apis/` to give Lloom access to external APIs as tools. The model decides when to call them based on the `description` field.
-
-```json
-{
-  "name": "weather",
-  "description": "Current weather for any location. Use endpoint '/{city}' with GET params {format: 'j1'}.",
-  "baseUrl": "https://wttr.in",
-  "cacheTtlSeconds": 1800,
-  "auth": null
-}
-```
 
 **Auth** — reference env vars rather than storing tokens directly:
 

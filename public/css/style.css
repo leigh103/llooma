@@ -18,7 +18,7 @@
   --red: #ff6b6b;
 }
 
-html, body { height: 100%; }
+html { height: 100%; }
 
 body {
   font-family: 'Syne', sans-serif;
@@ -26,7 +26,7 @@ body {
   color: var(--text);
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh; /* dvh shrinks when browser chrome appears, unlike vh */
   overflow: hidden;
 }
 
@@ -319,9 +319,12 @@ header {
 /* ── Input ── */
 footer {
   padding: 16px 24px 20px;
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
   border-top: 1px solid var(--border);
   background: var(--surface);
   flex-shrink: 0;
+  transition: transform 0.15s ease-out;
+  will-change: transform;
 }
 
 .input-row {
@@ -346,7 +349,7 @@ footer {
   outline: none;
   color: var(--text);
   font-family: 'Syne', sans-serif;
-  font-size: 14.5px;
+  font-size: 16px;
   resize: none;
   max-height: 140px;
   min-height: 24px;

@@ -1,0 +1,20 @@
+{
+  "name": "my-service",
+  "description": "What this API does and when to use it — the model reads this to decide when to call it",
+  "baseUrl": "https://api.example.com",
+  "auth": null
+}
+
+// With auth:
+// {
+//   "name": "my-service",
+//   "description": "...",
+//   "baseUrl": "https://api.example.com",
+//   "auth": {
+//     "header": "x-api-key",
+//     "value": "env:MY_SERVICE_API_KEY"
+//   }
+// }
+//
+// Add the actual token to .env:
+// MY_SERVICE_API_KEY=your-token-here

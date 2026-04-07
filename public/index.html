@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lloom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f14;
+      --surface: #13161e;
+      --surface2: #1a1e28;
+      --border: #252a38;
+      --accent: #5b8cff;
+      --accent-dim: rgba(91,140,255,0.12);
+      --text: #e2e6f0;
+      --text-dim: #6b7490;
+      --text-muted: #3d4460;
+      --user-bg: #1c2340;
+      --user-border: #2a3566;
+      --mildred-bg: #131720;
+      --code-bg: #0a0c12;
+      --green: #4ade9e;
+      --red: #ff6b6b;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'Syne', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+
+    .logo {
+      width: 36px;
+      height: 36px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -1px;
+    }
+
+    .header-text h1 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.02em;
+    }
+
+    .header-text p {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-family: 'DM Mono', monospace;
+      font-weight: 300;
+    }
+
+    .status {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      color: var(--text-dim);
+      font-family: 'DM Mono', monospace;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: pulse 2s infinite;
+    }
+
+    .status-dot.offline { background: var(--red); box-shadow: 0 0 6px var(--red); animation: none; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ── Messages ── */
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    #messages::-webkit-scrollbar { width: 5px; }
+    #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .message {
+      display: flex;
+      flex-direction: column;
+      max-width: 780px;
+      animation: fadeUp 0.2s ease;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message.user { align-self: flex-end; align-items: flex-end; }
+    .message.assistant { align-self: flex-start; align-items: flex-start; }
+
+    .message-label {
+      font-size: 10px;
+      font-family: 'DM Mono', monospace;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .bubble {
+      padding: 14px 18px;
+      border-radius: 14px;
+      font-size: 14.5px;
+      line-height: 1.65;
+      max-width: 100%;
+    }
+
+    .message.user .bubble {
+      background: var(--user-bg);
+      border: 1px solid var(--user-border);
+      border-radius: 14px 14px 4px 14px;
+      color: var(--text);
+    }
+
+    .message.assistant .bubble {
+      background: var(--mildred-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px 14px 14px 4px;
+      color: var(--text);
+    }
+
+    /* Markdown styling inside bubbles */
+    .bubble h1, .bubble h2, .bubble h3 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      margin: 12px 0 6px;
+      color: var(--text);
+    }
+    .bubble h1 { font-size: 18px; }
+    .bubble h2 { font-size: 15px; }
+    .bubble h3 { font-size: 14px; }
+    .bubble p { margin-bottom: 8px; }
+    .bubble p:last-child { margin-bottom: 0; }
+    .bubble ul, .bubble ol { padding-left: 20px; margin-bottom: 8px; }
+    .bubble li { margin-bottom: 4px; }
+    .bubble strong { color: #fff; font-weight: 600; }
+    .bubble em { color: var(--text-dim); }
+    .bubble a { color: var(--accent); text-decoration: none; }
+    .bubble a:hover { text-decoration: underline; }
+
+    .bubble code {
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      padding: 1px 6px;
+      border-radius: 4px;
+      color: #a5f3c8;
+    }
+
+    .bubble pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      overflow-x: auto;
+      margin: 10px 0;
+    }
+
+    .bubble pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 13px;
+    }
+
+    .bubble blockquote {
+      border-left: 3px solid var(--accent);
+      padding-left: 12px;
+      margin: 8px 0;
+      color: var(--text-dim);
+      font-style: italic;
+    }
+
+    /* Tool status */
+    .tool-status {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 4px 0;
+    }
+
+    .tool-status-line {
+      font-size: 12px;
+      font-family: 'DM Mono', monospace;
+      color: var(--accent);
+      opacity: 0.8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tool-status-line::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 1s infinite;
+      flex-shrink: 0;
+    }
+
+    /* Typing indicator */
+    .typing-indicator {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      padding: 16px 18px;
+    }
+
+    .typing-indicator span {
+      width: 7px;
+      height: 7px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      animation: typing 1.2s infinite;
+    }
+
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typing {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-6px); opacity: 1; }
+    }
+
+    /* ── Empty state ── */
+    #empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      text-align: center;
+      gap: 12px;
+      pointer-events: none;
+    }
+
+    #empty-state .big-m {
+      font-size: 64px;
+      font-weight: 800;
+      color: var(--surface2);
+      line-height: 1;
+      letter-spacing: -4px;
+    }
+
+    #empty-state p {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-family: 'DM Mono', monospace;
+      font-weight: 300;
+    }
+
+    .suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 8px;
+      pointer-events: all;
+    }
+
+    .suggestion-chip {
+      padding: 8px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 13px;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: 'Syne', sans-serif;
+    }
+
+    .suggestion-chip:hover {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ── Input ── */
+    footer {
+      padding: 16px 24px 20px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 8px 8px 8px 16px;
+      transition: border-color 0.15s;
+    }
+
+    .input-row:focus-within {
+      border-color: var(--accent);
+    }
+
+    #input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      font-size: 14.5px;
+      resize: none;
+      max-height: 140px;
+      min-height: 24px;
+      line-height: 1.5;
+      padding: 4px 0;
+    }
+
+    #input::placeholder { color: var(--text-muted); }
+
+    #send-btn {
+      width: 38px;
+      height: 38px;
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.15s, transform 0.1s;
+      flex-shrink: 0;
+    }
+
+    #send-btn:hover { opacity: 0.85; }
+    #send-btn:active { transform: scale(0.95); }
+    #send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    #send-btn svg { width: 18px; height: 18px; fill: #fff; }
+
+    .footer-meta {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: 'DM Mono', monospace;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo" id="logo">L</div>
+  <div class="header-text">
+    <h1 id="agent-name">Lloom</h1>
+    <p id="agent-description">Personal Ollama agent</p>
+  </div>
+  <div class="status">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-text">connecting...</span>
+  </div>
+</header>
+
+<div id="messages">
+  <div id="empty-state">
+    <div class="big-m" id="empty-letter">L</div>
+    <p id="empty-text">Ask me anything</p>
+  </div>
+</div>
+
+<footer>
+  <div class="input-row">
+    <textarea id="input" placeholder="Ask something..." rows="1"></textarea>
+    <button id="send-btn" onclick="sendFromInput()">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+  <div class="footer-meta">Enter to send · Shift+Enter for new line</div>
+</footer>
+
+<script>
+  const API_KEY = ''; // Set your API key here, or leave blank if none
+  const API_BASE = window.location.origin + '/api';
+
+  const messagesEl = document.getElementById('messages');
+  const inputEl = document.getElementById('input');
+  const sendBtn = document.getElementById('send-btn');
+  const emptyState = document.getElementById('empty-state');
+  const statusDot = document.getElementById('status-dot');
+  const statusText = document.getElementById('status-text');
+
+  let agentName = 'Lloom';
+  let history = [];
+  let isStreaming = false;
+
+  // Auto-resize textarea
+  inputEl.addEventListener('input', () => {
+    inputEl.style.height = 'auto';
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px';
+  });
+
+  inputEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendFromInput();
+    }
+  });
+
+  function sendFromInput() {
+    const msg = inputEl.value.trim();
+    if (msg) send(msg);
+  }
+
+  // Check health on load and populate agent identity
+  async function checkHealth() {
+    try {
+      const res = await fetch(`${API_BASE}/health`);
+      if (res.ok) {
+        const data = await res.json();
+        agentName = data.name || 'Lloom';
+        const description = data.description || 'Personal Ollama agent';
+        const initial = agentName.charAt(0).toUpperCase();
+
+        document.title = agentName;
+        document.getElementById('logo').textContent = initial;
+        document.getElementById('agent-name').textContent = agentName;
+        document.getElementById('agent-description').textContent = description;
+        document.getElementById('empty-letter').textContent = initial;
+        document.getElementById('empty-text').textContent = `Ask ${agentName} anything`;
+        inputEl.placeholder = `Ask ${agentName} something...`;
+
+        statusDot.classList.remove('offline');
+        statusText.textContent = 'online';
+      } else throw new Error();
+    } catch {
+      statusDot.classList.add('offline');
+      statusText.textContent = 'offline';
+    }
+  }
+
+  checkHealth();
+
+  // Simple markdown renderer
+  function renderMarkdown(text) {
+    return text
+      .replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
+        `<pre><code class="lang-${lang}">${escapeHtml(code.trim())}</code></pre>`)
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+      .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+      .replace(/^\* (.+)$/gm, '<li>$1</li>')
+      .replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`)
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
+      .replace(/\n\n/g, '</p><p>')
+      .replace(/^(?!<[hupbla])(.+)$/gm, m => m ? `<p>${m}</p>` : '')
+      .replace(/<p><\/p>/g, '');
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function addMessage(role, content = '') {
+    if (emptyState.style.display !== 'none') {
+      emptyState.style.display = 'none';
+    }
+
+    const wrap = document.createElement('div');
+    wrap.className = `message ${role}`;
+
+    const label = document.createElement('div');
+    label.className = 'message-label';
+    label.textContent = role === 'user' ? 'You' : agentName;
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+
+    if (role === 'assistant' && !content) {
+      bubble.innerHTML = `<div class="typing-indicator"><span></span><span></span><span></span></div>`;
+    } else {
+      bubble.innerHTML = role === 'assistant' ? renderMarkdown(content) : escapeHtml(content);
+    }
+
+    wrap.appendChild(label);
+    wrap.appendChild(bubble);
+    messagesEl.appendChild(wrap);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
+    return bubble;
+  }
+
+  async function send(message) {
+    if (isStreaming || !message.trim()) return;
+    isStreaming = true;
+    sendBtn.disabled = true;
+    inputEl.value = '';
+    inputEl.style.height = 'auto';
+
+    addMessage('user', message);
+    const bubble = addMessage('assistant'); // typing indicator
+
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (API_KEY) headers['x-api-key'] = API_KEY;
+
+      const res = await fetch(`${API_BASE}/chat/stream`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ message, history }),
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let fullReply = '';
+      bubble.innerHTML = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+
+        for (const line of lines) {
+          const data = line.slice(6);
+          if (data === '[DONE]') break;
+          try {
+            const { token, tool, error } = JSON.parse(data);
+            if (error) throw new Error(error);
+            if (tool) {
+              // Show tool call status inside the bubble
+              let statusEl = bubble.querySelector('.tool-status');
+              if (!statusEl) {
+                bubble.innerHTML = '';
+                statusEl = document.createElement('div');
+                statusEl.className = 'tool-status';
+                bubble.appendChild(statusEl);
+              }
+              const line = document.createElement('div');
+              line.className = 'tool-status-line';
+              line.textContent = tool;
+              statusEl.appendChild(line);
+            }
+            if (token) {
+              // First token — clear tool status and start rendering
+              if (bubble.querySelector('.tool-status')) bubble.innerHTML = '';
+              fullReply += token;
+              bubble.innerHTML = renderMarkdown(fullReply);
+              messagesEl.scrollTop = messagesEl.scrollHeight;
+            }
+          } catch {}
+        }
+      }
+
+      history.push({ role: 'user', content: message });
+      history.push({ role: 'assistant', content: fullReply });
+
+      // Keep history manageable
+      if (history.length > 20) history = history.slice(-20);
+
+    } catch (err) {
+      bubble.innerHTML = `<em style="color:var(--red)">Error: ${err.message}</em>`;
+    }
+
+    isStreaming = false;
+    sendBtn.disabled = false;
+    inputEl.focus();
+  }
+</script>
+
+</body>
+</html>

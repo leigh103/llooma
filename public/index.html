@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
-  <title>Lloom</title>
+  <title>Lloomaa</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
@@ -13,7 +13,7 @@
 <header>
   <div class="logo" id="logo">L</div>
   <div class="header-text">
-    <h1 id="agent-name">Lloom</h1>
+    <h1 id="agent-name">Llooma</h1>
     <p id="agent-description">Personal Ollama agent</p>
   </div>
   <button id="train-btn" onclick="runTraining()" title="Re-train from API services">train</button>
@@ -51,7 +51,7 @@
   const statusDot = document.getElementById('status-dot');
   const statusText = document.getElementById('status-text');
 
-  let agentName = 'Lloom';
+  let agentName = 'Llooma';
   let history = [];
   let isStreaming = false;
   let userLocation = null;
@@ -88,7 +88,7 @@
       const res = await fetch(`${API_BASE}/health`);
       if (res.ok) {
         const data = await res.json();
-        agentName = data.name || 'Lloom';
+        agentName = data.name || 'Llooma';
         const description = data.description || 'Personal Ollama agent';
         const initial = agentName.charAt(0).toUpperCase();
 

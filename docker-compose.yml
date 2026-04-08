@@ -1,5 +1,5 @@
 services:
-  lloom:
+  llooma:
     build: .
     ports:
       - "${PORT:-11003}:11003"

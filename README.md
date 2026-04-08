@@ -1,6 +1,6 @@
-# Lloom
+# Llooma
 
-A lightweight, self-hosted RAG middleware for Ollama. Lloom gives any Ollama model persistent memory, a knowledge base, configurable API tools, and a clean chat UI — with no heavy frameworks or external vector services.
+A lightweight, self-hosted RAG middleware for Ollama. Llooma gives any Ollama model persistent memory, a knowledge base, configurable API tools, and a clean chat UI — with no heavy frameworks or external vector services.
 
 ## How it works
 
@@ -29,7 +29,7 @@ Memory extraction → new facts embedded and stored automatically
   - A chat model: `ollama pull gemma4:e4b` (or any model with tool support)
   - An embedding model: `ollama pull nomic-embed-text`
 
-No external database required — Lloom uses SQLite with sqlite-vec for vector storage.
+No external database required — Llooma uses SQLite with sqlite-vec for vector storage.
 
 ## Setup
 
@@ -41,7 +41,7 @@ npm install
 cp env.sample .env
 # Edit .env with your Ollama URL, agent identity, and any optional keys
 
-# 3. Start Lloom
+# 3. Start Llooma
 npm start
 # or for development with auto-restart:
 npm run dev
@@ -86,7 +86,7 @@ Then run:
 npm run train
 ```
 
-Lloom fetches the endpoint, auto-detects fields, writes individual markdown files to `./docs/my-service/`, and ingests them — all in one step.
+Llooma fetches the endpoint, auto-detects fields, writes individual markdown files to `./docs/my-service/`, and ingests them — all in one step.
 
 ### Training from a website
 
@@ -116,11 +116,11 @@ The **train button** in the chat UI triggers training for all configured service
 
 ## Persistent memory
 
-Lloom automatically extracts memorable facts from every conversation and stores them as embeddings. On future queries, relevant memories are retrieved alongside knowledge base chunks — the model remembers context across sessions without any manual input.
+Llooma automatically extracts memorable facts from every conversation and stores them as embeddings. On future queries, relevant memories are retrieved alongside knowledge base chunks — the model remembers context across sessions without any manual input.
 
 ## API services (tools)
 
-Add JSON files to `config/apis/` to give Lloom access to external APIs as tools. The model decides when to call them based on the `description` field.
+Add JSON files to `config/apis/` to give Llooma access to external APIs as tools. The model decides when to call them based on the `description` field.
 
 **Auth** — reference env vars rather than storing tokens directly:
 
@@ -146,9 +146,9 @@ OLLAMA_TEMPERATURE=0.7
 OLLAMA_NUM_PREDICT=2048
 OLLAMA_KEEP_ALIVE=-1
 
-AGENT_NAME=Lloom
+AGENT_NAME=Llooma
 AGENT_DESCRIPTION=Personal Ollama agent
-AGENT_SYSTEM_PROMPT=You are Lloom, a personal AI assistant powered by Ollama.
+AGENT_SYSTEM_PROMPT=You are Llooma, a personal AI assistant powered by Ollama.
 
 DB_PATH=./data/knowledge.db
 DOCS_PATH=./docs
@@ -182,7 +182,7 @@ data: [DONE]
 
 ### GET /api/health
 ```json
-{ "status": "ok", "name": "Lloom", "description": "Personal Ollama agent", "timestamp": "..." }
+{ "status": "ok", "name": "Llooma", "description": "Personal Ollama agent", "timestamp": "..." }
 ```
 
 ## Slack
@@ -193,7 +193,7 @@ data: [DONE]
 4. Subscribe to events: `message.im`, `app_mention`
 5. Add `SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET`, `SLACK_APP_TOKEN` to `.env`
 
-Lloom will respond to DMs and @mentions.
+Llooma will respond to DMs and @mentions.
 
 ## Web search
 
@@ -206,7 +206,7 @@ const response = await fetch('http://localhost:3000/api/chat', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'x-api-key': process.env.LLOOM_API_KEY,
+    'x-api-key': process.env.LLOOMA_API_KEY,
   },
   body: JSON.stringify({ message, history }),
 });

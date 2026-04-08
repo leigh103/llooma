@@ -4,7 +4,7 @@ import { toolDefinitions, executeTool } from './tools/tools.js';
 import { extractAndStore } from './memory/memory.js';
 import 'dotenv/config';
 
-const AGENT_NAME = process.env.AGENT_NAME || 'Lloom';
+const AGENT_NAME = process.env.AGENT_NAME || 'Llooma';
 const SYSTEM_PROMPT = process.env.AGENT_SYSTEM_PROMPT ||
   `You are ${AGENT_NAME}, a personal AI assistant powered by Ollama.
 

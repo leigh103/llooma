@@ -1,14 +1,14 @@
-# LLoom — Project Context for Claude Code
+# Llooma — Project Context for Claude Code
 
-## What is LLoom?
+## What is Llooma?
 
-LLoom is a lightweight, self-hosted RAG (Retrieval-Augmented Generation) middleware built in Node.js. It sits between a set of markdown knowledge docs and a locally-running Ollama LLM, exposing a clean REST API, a browser chat UI, and a Slack integration.
+Llooma is a lightweight, self-hosted RAG (Retrieval-Augmented Generation) middleware built in Node.js. It sits between a set of markdown knowledge docs and a locally-running Ollama LLM, exposing a clean REST API, a browser chat UI, and a Slack integration.
 
-It was built as a replacement for OpenClaw — which was too complex, hard to maintain, and did more than was needed. LLoom does exactly what's required and nothing else.
+It was built as a replacement for OpenClaw — which was too complex, hard to maintain, and did more than was needed. Llooma does exactly what's required and nothing else.
 
 ## Primary Use Case
 
-LLoom powers **Mildred**, an AI assistant for **Melded** — a Node.js SaaS application that serves as an admin tool for music schools. Mildred answers questions about how to use Melded, and can also query live Melded data.
+Llooma powers **Mildred**, an AI assistant for **Melded** — a Node.js SaaS application that serves as an admin tool for music schools. Mildred answers questions about how to use Melded, and can also query live Melded data.
 
 ## Infrastructure
 
@@ -18,7 +18,7 @@ LLoom powers **Mildred**, an AI assistant for **Melded** — a Node.js SaaS appl
   - Chat model: `qwen3:14b`
   - Embedding model: `nomic-embed-text` (768 dimensions)
 - **SQLite + sqlite-vec**: Lightweight vector store, stored as a local `.db` file
-  - Used only by LLoom for knowledge embeddings
+  - Used only by Llooma for knowledge embeddings
   - Default path: `./data/knowledge.db`, configurable via `DB_PATH`
 
 ## Project Structure
@@ -66,7 +66,7 @@ lloom/
 
 ### Agentic Tool Loop
 - Tools are defined in `tools.js` and passed to Ollama's `/api/chat`
-- If the model returns `tool_calls`, LLoom executes them and feeds results back
+- If the model returns `tool_calls`, Llooma executes them and feeds results back
 - Loops up to 5 iterations until the model returns plain text
 - Streaming mode (`/api/chat/stream`) does RAG only — no tool loop — for simplicity
 
@@ -108,7 +108,7 @@ npm run ingest:watch  — Watch DOCS_PATH and auto-re-ingest on changes
 
 ## About Melded
 
-Melded is a Node.js SaaS application — an admin tool for music schools. It handles students, teachers, lesson scheduling, enrolments, and billing. It uses ArangoDB as its database. The LLoom/Mildred knowledge base is documentation about how to use Melded, written as markdown files in `./docs/`.
+Melded is a Node.js SaaS application — an admin tool for music schools. It handles students, teachers, lesson scheduling, enrolments, and billing. It uses ArangoDB as its database. The Llooma/Mildred knowledge base is documentation about how to use Melded, written as markdown files in `./docs/`.
 
 ## Coding Style
 

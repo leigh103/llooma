@@ -96,7 +96,7 @@ router.post('/train', auth, async (req, res) => {
 router.get('/health', (req, res) => {
   res.json({
     status: 'ok',
-    name: process.env.AGENT_NAME || 'Lloom',
+    name: process.env.AGENT_NAME || 'Llooma',
     description: process.env.AGENT_DESCRIPTION || 'Personal Ollama agent',
     location: process.env.DEFAULT_LOCATION || null,
     timestamp: new Date().toISOString(),

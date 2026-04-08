@@ -15,8 +15,11 @@ export function loadApiServices() {
       const raw = fs.readFileSync(path.join(SERVICES_PATH, file), 'utf-8');
       const config = JSON.parse(raw);
 
-      if (!config.name || !config.baseUrl) {
-        console.warn(`⚠️  API service ${file}: missing required "name" or "baseUrl", skipping`);
+      // Scrape/train-only configs don't need baseUrl — skip silently
+      if (!config.baseUrl) continue;
+
+      if (!config.name) {
+        console.warn(`⚠️  API service ${file}: missing required "name", skipping`);
         continue;
       }
 

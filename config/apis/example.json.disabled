@@ -32,7 +32,33 @@
 //   "auth": null
 // }
 
-// With web scraping (crawls a site and ingests pages as markdown):
+// With local file reading (LLM summarises each file and saves as markdown):
+// {
+//   "name": "my-codebase",
+//   "read": {
+//     "files": [
+//       "/path/to/src/routes/users.js",
+//       "/path/to/src/models/invoice.js"
+//     ],
+//     "prompt": "Summarise what this file does, its key functions, and how it fits into the application. Be concise."
+//   }
+// }
+//
+// "prompt" is optional — a sensible default is used if omitted.
+
+// With web scraping — explicit URLs (recommended for Cloudflare-protected sites):
+// {
+//   "name": "my-site",
+//   "scrape": {
+//     "urls": [
+//       "https://example.com/page-one",
+//       "https://example.com/page-two"
+//     ],
+//     "delayMs": 500
+//   }
+// }
+
+// With web scraping — crawl from root (follows links automatically):
 // {
 //   "name": "my-site",
 //   "scrape": {
@@ -43,5 +69,5 @@
 //   }
 // }
 //
-// Note: scraping may not work on sites protected by Cloudflare or similar
-// bot protection that requires JavaScript execution.
+// Note: crawl mode may fail on sites with Cloudflare or similar bot protection.
+// Use the explicit urls array instead.

@@ -88,6 +88,28 @@ npm run train
 
 Llooma fetches the endpoint, auto-detects fields, writes individual markdown files to `./docs/my-service/`, and ingests them — all in one step.
 
+### Training from local files
+
+To have Llooma read local files and generate LLM summaries as knowledge, add a `read` block:
+
+```json
+{
+  "name": "my-codebase",
+  "read": {
+    "files": [
+      "/path/to/src/routes/users.js",
+      "/path/to/src/models/invoice.js"
+    ],
+    "prompt": "Summarise what this file does, its key functions, and how it fits into the application. Be concise."
+  }
+}
+```
+
+- `files` — explicit list of file paths to read
+- `prompt` — optional, customises the summary instruction. Falls back to a sensible default if omitted.
+
+Each file is read and sent to Ollama, which generates a markdown summary saved to `./docs/my-codebase/`. Re-training replaces them. Useful for giving the agent awareness of application code or other local documents without granting it write access to those files.
+
 ### Training from a website
 
 To scrape a site and ingest its pages as knowledge, add a `scrape` block instead of `train`:

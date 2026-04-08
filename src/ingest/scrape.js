@@ -6,8 +6,6 @@ import { ingestAll } from './ingest.js';
 
 const DOCS_PATH = process.env.DOCS_PATH || './docs';
 
-// Elements to strip before extracting text
-const STRIP_SELECTORS = 'script, style, nav, header, footer, [aria-hidden="true"], .cookie-banner, #cookie-banner';
 const SKIP_EXTENSIONS = /\.(jpg|jpeg|png|gif|webp|svg|ico|pdf|zip|mp4|mp3|woff|woff2|ttf|eot)(\?.*)?$/i;
 
 function extractLinks($, baseUrl) {
@@ -28,19 +26,15 @@ function extractLinks($, baseUrl) {
   return links;
 }
 
-function extractContent($, url) {
-  $(STRIP_SELECTORS).remove();
-
+function extractContent($, rawHtml, url) {
   const title = $('title').text().trim() || $('h1').first().text().trim() || url;
 
-  // Prefer main content area if present
-  const contentEl = $('main, article, [role="main"], .content, #content').first();
-  const target = contentEl.length ? contentEl : $('body');
-
-  const text = target.text()
-    .replace(/\t/g, ' ')
-    .replace(/ {2,}/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
+  // Simple approach: strip script/style blocks and all tags — same as web_fetch
+  const text = rawHtml
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s{2,}/g, ' ')
     .trim();
 
   return { title, text };
@@ -70,16 +64,30 @@ async function fetchPage(url) {
   return String(res.data);
 }
 
-export async function scrapeService(service) {
-  const { name, scrape } = service;
-  const rootUrl = scrape.url.replace(/\/$/, '');
-  const maxDepth = scrape.depth ?? 2;
-  const maxPages = scrape.maxPages ?? Infinity;
-  const delayMs = scrape.delayMs ?? 0;
+async function scrapeUrls(urls, delayMs) {
+  const pages = [];
+  for (let i = 0; i < urls.length; i++) {
+    const url = urls[i];
+    if (delayMs > 0 && i > 0) await new Promise(r => setTimeout(r, delayMs));
+    let html;
+    try {
+      html = await fetchPage(url);
+    } catch (err) {
+      console.error(`scrape error ${err.response?.status || err.message} — ${url}`);
+      continue;
+    }
+    const $ = load(html);
+    const { title, text } = extractContent($, html, url);
+    console.log(`scraped: ${url} — ${text.length} chars`);
+    if (text.length > 100) pages.push({ url, title, text });
+  }
+  return pages;
+}
 
+async function crawlUrl(rootUrl, maxDepth, maxPages, delayMs) {
   const visited = new Set();
   const queue = [{ url: rootUrl, depth: 0 }];
-  const pages = []; // { url, title, text }
+  const pages = [];
 
   while (queue.length > 0 && pages.length < maxPages) {
     const { url, depth } = queue.shift();
@@ -97,7 +105,7 @@ export async function scrapeService(service) {
     }
 
     const $ = load(html);
-    const { title, text } = extractContent($, url);
+    const { title, text } = extractContent($, html, url);
     console.log(`scraped: ${url} — ${text.length} chars`);
     if (text.length > 100) pages.push({ url, title, text });
 
@@ -106,6 +114,22 @@ export async function scrapeService(service) {
         if (!visited.has(link)) queue.push({ url: link, depth: depth + 1 });
       }
     }
+  }
+  return pages;
+}
+
+export async function scrapeService(service) {
+  const { name, scrape } = service;
+  const delayMs = scrape.delayMs ?? 0;
+
+  let pages;
+  if (Array.isArray(scrape.urls)) {
+    pages = await scrapeUrls(scrape.urls, delayMs);
+  } else {
+    const rootUrl = scrape.url.replace(/\/$/, '');
+    const maxDepth = scrape.depth ?? 2;
+    const maxPages = scrape.maxPages ?? Infinity;
+    pages = await crawlUrl(rootUrl, maxDepth, maxPages, delayMs);
   }
 
   if (pages.length === 0) return null;

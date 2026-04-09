@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { globSync } from 'fs';
 import path from 'path';
 import { chat } from '../ollama.js';
 import { ingestAll } from './ingest.js';
@@ -9,6 +10,22 @@ const DEFAULT_PROMPT = 'Summarise what this file does, its key functions and res
 
 function fileToDocName(filePath) {
   return path.basename(filePath).replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') + '.md';
+}
+
+function expandPatterns(patterns) {
+  const files = [];
+  for (const pattern of patterns) {
+    if (/[*?{[]/.test(pattern)) {
+      const matches = globSync(pattern);
+      if (matches.length === 0) {
+        console.warn(`read: no files matched pattern — ${pattern}`);
+      }
+      files.push(...matches);
+    } else {
+      files.push(pattern);
+    }
+  }
+  return [...new Set(files)];
 }
 
 async function summariseFile(filePath, prompt) {
@@ -25,7 +42,7 @@ async function summariseFile(filePath, prompt) {
 export async function readService(service) {
   const { name, read } = service;
   const prompt = read.prompt || DEFAULT_PROMPT;
-  const files = read.files.filter(f => {
+  const files = expandPatterns(read.files).filter(f => {
     if (!fs.existsSync(f)) {
       console.warn(`read: file not found, skipping — ${f}`);
       return false;

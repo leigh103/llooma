@@ -8,14 +8,12 @@ It was built as a replacement for OpenClaw — which was too complex, hard to ma
 
 ## Primary Use Case
 
-Llooma powers **Mildred**, an AI assistant for **Melded** — a Node.js SaaS application that serves as an admin tool for music schools. Mildred answers questions about how to use Melded, and can also query live Melded data.
+Llooma is an AI assistant which provides persistent memory and RAG to Ollama (cloud and local) models. The RAG can be populated from multiple data sources, APIs, website scraping and local files.
 
 ## Infrastructure
 
-- **Server**: Unraid 7, running services as Docker containers
-- **GPU**: RTX 4070 SUPER (12GB VRAM)
 - **Ollama**: Running in a Docker container on Unraid
-  - Chat model: `qwen3:14b`
+  - Chat model: `gemma4:e4b`
   - Embedding model: `nomic-embed-text` (768 dimensions)
 - **SQLite + sqlite-vec**: Lightweight vector store, stored as a local `.db` file
   - Used only by Llooma for knowledge embeddings

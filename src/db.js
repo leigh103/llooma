@@ -33,4 +33,13 @@ export function setupDb() {
     )
   `);
 
+  // FTS5 table for BM25 keyword search (hybrid search complement to vector search)
+  db.exec(`
+    CREATE VIRTUAL TABLE IF NOT EXISTS knowledge_fts USING fts5(
+      chunk,
+      source UNINDEXED,
+      tokenize='porter ascii'
+    )
+  `);
+
 }

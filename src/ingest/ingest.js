@@ -59,15 +59,20 @@ export async function ingestFile(filePath) {
 
   // Remove existing chunks for this source file
   db.prepare(`DELETE FROM knowledge_vec WHERE source = ?`).run(source);
+  db.prepare(`DELETE FROM knowledge_fts WHERE source = ?`).run(source);
 
-  const insert = db.prepare(`
+  const insertVec = db.prepare(`
     INSERT INTO knowledge_vec(embedding, source, chunk, ingested_at)
     VALUES (?, ?, ?, ?)
+  `);
+  const insertFts = db.prepare(`
+    INSERT INTO knowledge_fts(chunk, source) VALUES (?, ?)
   `);
 
   for (const chunk of chunks) {
     const embedding = await embed(chunk.chunk);
-    insert.run(new Float32Array(embedding), chunk.source, chunk.chunk, new Date().toISOString());
+    insertVec.run(new Float32Array(embedding), chunk.source, chunk.chunk, new Date().toISOString());
+    insertFts.run(chunk.chunk, chunk.source);
   }
 
   return chunks.length;

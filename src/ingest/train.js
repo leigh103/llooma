@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 import 'dotenv/config';
-import { ingestAll } from './ingest.js';
+import { ingestAll, ingestFile } from './ingest.js';
 import { scrapeService } from './scrape.js';
 import { readService } from './read.js';
 
@@ -121,11 +121,58 @@ function loadServices() {
 }
 
 /**
+ * Ingest markdown files not managed by any service config:
+ * - .md files directly in DOCS_PATH root
+ * - subdirectories in DOCS_PATH that have no matching service name
+ */
+async function ingestUnmanagedDocs(managedServiceNames) {
+  const managed = new Set(managedServiceNames);
+  const results = [];
+
+  if (!fs.existsSync(DOCS_PATH)) return results;
+
+  const entries = fs.readdirSync(DOCS_PATH, { withFileTypes: true });
+
+  // Root-level .md files
+  const rootFiles = entries
+    .filter(e => e.isFile() && e.name.endsWith('.md'))
+    .map(e => path.join(DOCS_PATH, e.name));
+
+  if (rootFiles.length > 0) {
+    try {
+      for (const file of rootFiles) {
+        await ingestFile(file);
+      }
+      results.push({ service: '(root docs)', count: rootFiles.length });
+    } catch (err) {
+      results.push({ service: '(root docs)', error: err.message });
+    }
+  }
+
+  // Unmanaged subdirectories
+  const unmanagedDirs = entries
+    .filter(e => e.isDirectory() && !managed.has(e.name))
+    .map(e => path.join(DOCS_PATH, e.name));
+
+  for (const dir of unmanagedDirs) {
+    try {
+      await ingestAll(dir);
+      results.push({ service: path.basename(dir), count: null });
+    } catch (err) {
+      results.push({ service: path.basename(dir), error: err.message });
+    }
+  }
+
+  return results;
+}
+
+/**
  * Run training for all configured services (or a specific one by name).
  * Returns an array of result objects: { service, count, error? }
  */
 export async function runTraining(serviceName = null) {
-  const services = loadServices().filter(s => !serviceName || s.name === serviceName);
+  const allServices = loadServices();
+  const services = allServices.filter(s => !serviceName || s.name === serviceName);
   const results = [];
 
   for (const service of services) {
@@ -143,6 +190,13 @@ export async function runTraining(serviceName = null) {
       console.error(`Training error for ${service.name}:`, err.config?.url || '', err.message);
       results.push({ service: service.name, error: err.message });
     }
+  }
+
+  // Also ingest any docs not managed by a service config (unless targeting a specific service)
+  if (!serviceName) {
+    const managedNames = allServices.map(s => s.name);
+    const unmanaged = await ingestUnmanagedDocs(managedNames);
+    results.push(...unmanaged);
   }
 
   return results;

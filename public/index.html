@@ -17,6 +17,7 @@
     <p id="agent-description">Personal Ollama agent</p>
   </div>
   <button id="train-btn" onclick="runTraining()" title="Re-train from API services">train</button>
+  <button id="clear-btn" onclick="clearHistory()" title="Clear conversation">clear</button>
   <div class="status">
     <div class="status-dot" id="status-dot"></div>
     <span id="status-text">connecting...</span>
@@ -52,7 +53,7 @@
   const statusText = document.getElementById('status-text');
 
   let agentName = 'Llooma';
-  let history = [];
+  let history = JSON.parse(localStorage.getItem('chat_history') || '[]');
   let isStreaming = false;
   let userLocation = null;
 
@@ -111,6 +112,19 @@
   }
 
   checkHealth();
+
+  // Restore saved conversation
+  if (history.length > 0) {
+    history.forEach(m => addMessage(m.role, m.content));
+  }
+
+  function clearHistory() {
+    history = [];
+    localStorage.removeItem('chat_history');
+    messagesEl.innerHTML = '';
+    messagesEl.appendChild(emptyState);
+    emptyState.style.display = '';
+  }
 
   async function runTraining() {
     const btn = document.getElementById('train-btn');
@@ -255,6 +269,7 @@
 
       // Keep history manageable
       if (history.length > 20) history = history.slice(-20);
+      localStorage.setItem('chat_history', JSON.stringify(history));
 
     } catch (err) {
       bubble.innerHTML = `<em style="color:var(--red)">Error: ${err.message}</em>`;

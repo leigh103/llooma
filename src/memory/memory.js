@@ -9,14 +9,14 @@ Ignore: questions answered from documentation, general how-to queries, anything 
 
 Return ONLY a valid JSON array of short factual strings. Return [] if nothing is worth remembering. No explanation, no other text.`;
 
-export async function extractAndStore(userMessage, assistantResponse) {
+export async function extractAndStore(userMessage) {
   let response;
   try {
     response = await chat([
       { role: 'system', content: EXTRACTION_PROMPT },
       {
         role: 'user',
-        content: `User said: ${userMessage}\n\nAssistant replied: ${assistantResponse}`,
+        content: `User said: ${userMessage}`,
       },
     ]);
   } catch (err) {
@@ -38,16 +38,23 @@ export async function extractAndStore(userMessage, assistantResponse) {
   if (!Array.isArray(facts) || facts.length === 0) return;
 
   const db = getDb();
-  const insert = db.prepare(`
+  const insertVec = db.prepare(`
     INSERT INTO knowledge_vec(embedding, source, chunk, ingested_at)
     VALUES (?, 'memory', ?, ?)
+  `);
+  const insertFts = db.prepare(`
+    INSERT INTO knowledge_fts(chunk, source) VALUES (?, 'memory')
   `);
 
   for (const fact of facts) {
     if (typeof fact !== 'string' || !fact.trim()) continue;
     try {
       const embedding = await embed(fact);
-      insert.run(new Float32Array(embedding), fact, new Date().toISOString());
+      const now = new Date().toISOString();
+      db.transaction(() => {
+        insertVec.run(new Float32Array(embedding), fact, now);
+        insertFts.run(fact);
+      })();
     } catch (err) {
       console.warn(`⚠️  Failed to store memory "${fact}":`, err.message);
     }

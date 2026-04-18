@@ -1,15 +1,13 @@
 import { getDb } from '../db.js';
 import { embed } from '../ollama.js';
+import 'dotenv/config';
 
-const TOP_K = 5;
+const TOP_K = parseInt(process.env.RAG_TOP_K) || 3;
 const RRF_K = 60;          // RRF constant — higher = less aggressive rank weighting
 const MAX_DISTANCE = 0.95; // discard vector results with no meaningful similarity
+const MAX_PER_SOURCE = parseInt(process.env.RAG_MAX_PER_SOURCE) || 2;
+const MIN_RRF_SCORE = parseFloat(process.env.RAG_MIN_SCORE) || 0;
 
-/**
- * Build an FTS5 OR query from a natural language string.
- * Uses OR so partial word matches still contribute a BM25 score.
- * Filters short/common words to reduce noise.
- */
 const FTS_STOPWORDS = new Set(['a','an','the','is','it','in','on','of','to','and','or','for','with','was','when','how','what','why','who','are','be','been','has','had','have','do','did','does','this','that','these','those','by','at','as','from','not','no','so','its','my','we','i','you','he','she','they']);
 
 function sanitiseFtsQuery(query) {
@@ -19,7 +17,7 @@ function sanitiseFtsQuery(query) {
     .toLowerCase()
     .split(/\s+/)
     .filter(w => w.length > 2 && !FTS_STOPWORDS.has(w));
-  return words.join(' OR ');
+  return { and: words.join(' AND '), or: words.join(' OR ') };
 }
 
 /**
@@ -44,20 +42,24 @@ export async function retrieve(query, k = TOP_K) {
     ? allVecResults.filter(r => r.distance < MAX_DISTANCE)
     : allVecResults;
 
-  // BM25 keyword search via FTS5
+  // BM25 keyword search via FTS5 — try AND first for precision, fall back to OR
   let ftsResults = [];
-  const ftsQuery = sanitiseFtsQuery(query);
-  if (ftsQuery) {
+  const { and: ftsAnd, or: ftsOr } = sanitiseFtsQuery(query);
+  if (ftsOr) {
+    const stmt = db.prepare(`
+      SELECT source, chunk, rank
+      FROM knowledge_fts
+      WHERE knowledge_fts MATCH ?
+      ORDER BY rank
+      LIMIT ?
+    `);
     try {
-      ftsResults = db.prepare(`
-        SELECT source, chunk, rank
-        FROM knowledge_fts
-        WHERE knowledge_fts MATCH ?
-        ORDER BY rank
-        LIMIT ?
-      `).all(ftsQuery, k * 2);
-    } catch {
-      // Malformed FTS query — fall back to vector-only
+      ftsResults = stmt.all(ftsAnd, k * 2);
+    } catch { /* malformed — will try OR below */ }
+    if (ftsResults.length === 0) {
+      try {
+        ftsResults = stmt.all(ftsOr, k * 2);
+      } catch { /* fall back to vector-only */ }
     }
   }
 
@@ -78,10 +80,20 @@ export async function retrieve(query, k = TOP_K) {
     data.set(id, { source: r.source, chunk: r.chunk });
   });
 
-  return [...scores.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, k)
-    .map(([id]) => data.get(id));
+  const sourceCounts = new Map();
+  const results = [];
+
+  for (const [id, score] of [...scores.entries()].sort((a, b) => b[1] - a[1])) {
+    if (results.length >= k) break;
+    if (score < MIN_RRF_SCORE) break;
+    const item = data.get(id);
+    const count = sourceCounts.get(item.source) || 0;
+    if (count >= MAX_PER_SOURCE) continue;
+    sourceCounts.set(item.source, count + 1);
+    results.push(item);
+  }
+
+  return results;
 }
 
 /**
